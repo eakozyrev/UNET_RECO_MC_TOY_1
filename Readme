@@ -1,0 +1,21 @@
+**
+12 November 2021
+**
+Unet model with 63 layers in total
+3,705,537 learnable parameters
+
+See main.py:
+    generate_all(self,N)
+        -- generate N toy MC labels [./data/label/]
+        -- generate N toy MC images [./data/image/]
+            blurring kernel in gen_fig_1.py
+    train_nn(Net, data_path, epochs=50, batch_size=10, lr=0.0001)
+        -- train Unet, save weights to ./best_model.pth
+    predict()
+        -- test figures in [./data/test/]
+        -- save unet output to [./data/test/unet/*.png]
+    analyze()
+        -- compare blurred and unet images with labels
+        -- save to  [./data/test/unet/*_res.png]
+    draw_loss_from_file("history_loss.dat")
+        -- plot loss as function of batches processed [loss_hist.png]
