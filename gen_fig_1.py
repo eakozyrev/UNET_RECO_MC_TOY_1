@@ -1,3 +1,6 @@
+#  Evgeny Kozyrev
+
+
 import os
 import torch
 import torch.nn as nn
@@ -9,6 +12,7 @@ import math
 import cv2
 from scipy import integrate
 import shutil
+
 
 class Toy_fig_1:
     """This is a base class to generate toy figure type #1"""
@@ -34,8 +38,8 @@ class Toy_fig_1:
     def dr_rect(self, par):
         par[0] = int(par[0]*self.w)
         par[1] = int(par[1]*self.h)
-        par[2] = int(self.size-0.1)
-        par[3] = int(self.size-0.1)
+        par[2] = int(par[2]*self.size)
+        par[3] = int(par[3]*self.size)
         level = (par[4]-0.5)*200 + self.bckg + 40*(par[4]-0.5)/abs((par[4]-0.5))
 
         for i in range(int(par[0]) - int(par[2]/2), int(par[0]) + int(par[2]/2)):
@@ -51,8 +55,8 @@ class Toy_fig_1:
     def dr_circle(self,par):
         xc = par[0]*self.w
         yc = par[1]*self.h
-        ax_a = self.size*0.95/2
-        ax_b = self.size*0.95/2
+        ax_a = par[2]*0.95/2*self.size
+        ax_b = par[3]*0.95/2*self.size
         level = (par[4] - 0.5) * 200 + self.bckg + 40 * (par[4] - 0.5) / abs((par[4] - 0.5))
 
         for i in range(self.w):
@@ -254,7 +258,6 @@ def plot_pattern():
 
 def generate_all(N,plotsize,path):
     plot = Toy_fig_1(144, 144)
-    plot.size = plotsize*(np.random.rand(1).squeeze()+0.5)/1.3
    # try:
     #    shutil.rmtree(path)
    # except OSError:
@@ -287,9 +290,10 @@ def generate_all(N,plotsize,path):
 
     for i in range(N):
         print(i)
-        plot.bckg = 133 + (np.random.rand(1).squeeze() - 0.5) * 70.
         plot.clear();
-        for j in range(int(np.random.rand(1)[0]*200/plotsize)):
+        plot.bckg = 133 + (np.random.rand(1).squeeze() - 0.5) * 70.
+        plot.size = plotsize*(np.random.rand(1).squeeze()+0.5)/1.3
+        for j in range(int(np.random.rand(1)[0]*400/plotsize)):
             plot.dr_rect(np.random.rand(5))
             plot.dr_quadr(np.random.rand(4, 2))
             plot.dr_circle(np.random.rand(5))
@@ -329,8 +333,9 @@ def generate_all(N,plotsize,path):
 
 
 if __name__ == '__main__':
-    plot_pattern()
-    #generate_all(20,50,'data/validation/')
+    #plot_pattern()
+    generate_all(20,50,'data/')
+    generate_all(20,50,'data/validation/')
     #generate_all(10, 50, 'data_50/validation/')
     #generate_all(2000,20,'data_20/')
     #generate_all(10, 20, 'data_20/validation/')
