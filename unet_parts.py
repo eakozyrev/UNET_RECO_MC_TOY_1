@@ -4,14 +4,14 @@ import torch.nn.functional as Func
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels,track_running=False):
         super().__init__()
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            nn.BatchNorm2d(out_channels,track_running_stats=track_running),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            nn.BatchNorm2d(out_channels,track_running_stats=track_running),
             nn.ReLU(inplace=True)
         )
 
@@ -21,11 +21,11 @@ class DoubleConv(nn.Module):
 class Down(nn.Module):
     """Downscaling with maxpool then double conv"""
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels,track_running=False):
         super().__init__()
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels)
+            DoubleConv(in_channels, out_channels,track_running)
         )
 
     def forward(self, x):
@@ -33,7 +33,7 @@ class Down(nn.Module):
 
 class Up(nn.Module):
     """Upscaling then double conv"""
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels, out_channels, bilinear=True,track_running=False):
         super().__init__()
         # if bilinear, use the normal convolutions to reduce the number of channels
         if bilinear:
@@ -41,16 +41,17 @@ class Up(nn.Module):
         else:
             self.up = nn.ConvTranspose2d(in_channels // 2, in_channels // 2, kernel_size=2, stride=2)
 
-        self.conv = DoubleConv(in_channels, out_channels)
+        self.conv = DoubleConv(in_channels, out_channels,track_running)
 
     def forward(self, x1, x2):
         x1 = self.up(x1)
         # input is CHW
         diffY = torch.tensor([x2.size()[2] - x1.size()[2]])
         diffX = torch.tensor([x2.size()[3] - x1.size()[3]])
-
-        x1 = Func.pad(x1, [torch.div(diffX,2,rounding_mode='trunc'), diffX - torch.div(diffX,2,rounding_mode='trunc'),
-                        torch.div(diffY,2,rounding_mode='trunc'), diffY - torch.div(diffY,2,rounding_mode='trunc')])
+        diffY = int(diffY)
+        diffX = int(diffX)
+        pad = (diffX//2, diffX - diffX//2,diffY//2, diffY - diffY//2)
+        x1 = Func.pad(x1, pad)
 
         x = torch.cat([x2, x1], dim=1)
         return self.conv(x)
